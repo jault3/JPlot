@@ -38,6 +38,7 @@ public class AxisPanel extends JPanel {
 		setPreferredSize(new Dimension(Constants.WINDOW_WIDTH-Constants.GRID_WIDTH, Constants.GRID_HEIGHT));
 	}
 	
+	/** Draws the x axis numbers */
 	public void drawAxisMarkersHorizontal(int density, Graphics g) {
 		g.setColor(Color.BLACK);
 		int newWidth = Constants.GRID_WIDTH+(Constants.GRID_WIDTH/density);
@@ -48,6 +49,7 @@ public class AxisPanel extends JPanel {
 		}
 	}
 	
+	/** Draws the y axis numbers */
 	public void drawAxisMarkersVertical(int density, Graphics g) {
 		g.setColor(Color.BLACK);
 		int newHeight = Constants.GRID_HEIGHT+(Constants.GRID_HEIGHT/density);

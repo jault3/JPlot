@@ -56,7 +56,7 @@ public class Grid extends JPanel {
 	
 	public void addPoint(Point p) {
 		points.add(p);
-		plotPanel.drawPoint(p);
+		plotPanel.drawPoint(plotPanel.getGraphics(), p);
 		redraw();
 	}
 	
@@ -65,8 +65,8 @@ public class Grid extends JPanel {
 	}
 	
 	public void redraw() {
-		invalidate();
-		plotPanel.invalidate();
+		System.out.println("repainting");
+		repaint();
 	}
 	
 	public int getGridDensity() {
@@ -82,6 +82,11 @@ public class Grid extends JPanel {
 	public void paintComponent(Graphics g) {
 		super.paintComponent(g);
 		setBackground(Color.BLACK);
+		System.out.println("clearing");
+		g.clearRect(0, 0, Constants.WINDOW_WIDTH, Constants.WINDOW_HEIGHT);
+		//xAxisPanel.validate();
+		//yAxisPanel.validate();
+		//plotPanel.validate();
 	}
 
 }

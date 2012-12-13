@@ -18,7 +18,7 @@ public class JPlot extends JFrame {
 	
 	public JPlot() {
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setResizable(false);
+        setResizable(true);
         getContentPane().setPreferredSize(new Dimension(Constants.WINDOW_WIDTH, Constants.WINDOW_HEIGHT));
         
         grid = Grid.getInstance();
@@ -39,6 +39,7 @@ public class JPlot extends JFrame {
 		grid.addPoint(new Point(24,24));
 		grid.addPoint(new Point(36,36));
 		grid.addPoint(new Point(48,48));
+		grid.addPoint(new Point(60,60));
 	}
 
 }
