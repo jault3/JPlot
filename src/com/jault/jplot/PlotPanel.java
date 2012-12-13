@@ -3,14 +3,16 @@ package com.jault.jplot;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
-import java.awt.GridBagLayout;
 import java.awt.Point;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
 
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
-import javax.swing.border.EmptyBorder;
+import javax.swing.JPopupMenu;
+
+import junit.framework.Assert;
 
 import com.jault.jplot.helpers.Constants;
 
@@ -22,9 +24,8 @@ public class PlotPanel extends JPanel {
 	private static final long serialVersionUID = 2975690672805786359L;
 	
 	private int activePointIndexHolder;
-	private Point activePointHolder;
 	private Point activePoint;
-	//private Point draggingPoint;
+	private PopUpDemo popUp;
 
 	public PlotPanel() {
 		setPreferredSize(new Dimension(Constants.GRID_WIDTH, Constants.GRID_HEIGHT));
@@ -38,50 +39,62 @@ public class PlotPanel extends JPanel {
 					activePoint = translateToNearestPoint(new Point(event.getX(),event.getY()));
 					Grid.getInstance().getPoints().set(activePointIndexHolder, activePoint);
 					Grid.getInstance().redraw();
-					Graphics g = getGraphics();
-					g.setColor(Color.ORANGE);
-					drawPoint(g, activePoint);
-					//drawLine(g, activePoint, draggingPoint);
 				}
 			}
 			@Override
-			public void mouseMoved(MouseEvent event) {//ignore
+			public void mouseMoved(MouseEvent event) {
+				if (activePoint == null) {
+					Point p = setInterceptedPoint(new Point(event.getX(), event.getY()));
+					if (p != null) {
+						Constants.HOVER_INDEX = Grid.getInstance().getPoints().indexOf(p);
+					} else {
+						Constants.HOVER_INDEX = -5;
+					}
+					Grid.getInstance().repaint();
+				}
 			}
 		});
 		addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent event) {
-				System.out.println("clicked "+event.getX()+","+event.getY());
+				if (event.getButton() == MouseEvent.BUTTON1) {
+					System.out.println("clicked "+event.getX()+","+event.getY());
+					Grid.getInstance().addPoint(translateToNearestPoint(new Point(event.getX(), event.getY())));
+				} else if (event.getButton() == MouseEvent.BUTTON3) {
+					System.out.println("right clicked");
+					doPop(event);
+				}
 			}
 			@Override
 			public void mousePressed(MouseEvent event) {
 				Point p = new Point(event.getX(), event.getY());
-				setInterceptedPoint(p);
+				activePoint = setInterceptedPoint(p);
+				activePointIndexHolder = Grid.getInstance().getPoints().indexOf(activePoint);
+				Constants.DRAGGING_INDEX = activePointIndexHolder;
 			}
 			@Override
 			public void mouseReleased(MouseEvent event) {
 				activePoint = null;
-				activePointHolder = null;
 				activePointIndexHolder = -5;
 				Constants.DRAGGING_INDEX = -5;
 				Grid.getInstance().repaint();
+				Constants.HOVER_INDEX = -5;
 			}
 		});
 	}
 	
-	public void setInterceptedPoint(Point point) {
+	public Point setInterceptedPoint(Point point) {
+		Point retvalPoint = null;
 		for (Point p : Grid.getInstance().getPoints()) {
 			Point temp = translateToLocation(p);
 			temp.x-=Constants.POINT_RADIUS;
 			temp.y+=Constants.POINT_RADIUS;
 			if ((point.x < temp.x+10 && point.x > temp.x-10) && (point.y < temp.y+10 && point.y > temp.y-10)) {
-				activePoint = p;
-				activePointHolder = new Point(p.x, p.y);
-				activePointIndexHolder = Grid.getInstance().getPoints().indexOf(p);
-				Constants.DRAGGING_INDEX = activePointIndexHolder;
+				retvalPoint = p;
 			}
 		}
-		System.out.println(""+activePoint);
+		System.out.println(""+retvalPoint);
+		return retvalPoint;
 	}
 	
 	public void drawGridLines(int density, Graphics g) {
@@ -98,24 +111,6 @@ public class PlotPanel extends JPanel {
 	}
 	
 	public void drawPoint(Graphics g, Point p) {
-		//int tempx = p.x;
-		//int tempy = p.y;
-		
-		//if (Constants.SNAP_TO_GRID_CORNERS) {
-			//tempx = round(tempx);
-			//tempy = round(tempy);
-		//}
-		
-		//x = (int)Math.floor(0.5+((Constants.GRID_WIDTH/Grid.getInstance().getGridDensity())*(x/Constants.STEP_INCREMENT)));
-		//y = (int)Math.floor(0.5+((Constants.GRID_HEIGHT/Grid.getInstance().getGridDensity())*(y/Constants.STEP_INCREMENT)));
-		
-		//we need to "flip" y because pixels start at 0,0 in the top left, but a human readable plot starts 0,0 in the
-		//bottom left
-		//y = Constants.GRID_HEIGHT-Constants.GRID_OFFSET-y;
-		
-		//account for the radius of the point and the grid offset
-		//x-=(Constants.POINT_RADIUS-Constants.GRID_OFFSET);
-		//y+=(Constants.POINT_RADIUS-Constants.GRID_OFFSET);
 		Point temp = translateToLocation(p);
 		int x = temp.x;
 		int y = temp.y;
@@ -123,6 +118,17 @@ public class PlotPanel extends JPanel {
 		y+=Constants.POINT_RADIUS;
 		
 		g.fillOval(x, y, Constants.POINT_RADIUS*2, Constants.POINT_RADIUS*2);
+		
+		drawCoordinatesAbovePoint(g, p, temp);
+	}
+	
+	public void drawCoordinatesAbovePoint(Graphics g, Point coordinates, Point location) {
+		if (Constants.HOVER_INDEX == Grid.getInstance().getPoints().indexOf(coordinates)) {
+			g.setColor(Color.WHITE);
+		} else {
+			g.setColor(Color.LIGHT_GRAY);
+		}
+		g.drawString(""+coordinates.x+","+coordinates.y, location.x, location.y-10);
 	}
 	
 	public int round(int num) {
@@ -205,12 +211,14 @@ public class PlotPanel extends JPanel {
 		setBackground(Color.BLACK);
 		drawGridLines(Grid.getInstance().getGridDensity(), g);
 		//loop that draws each point
-		for (Point p : Grid.getInstance().getPoints()) {
-			g.setColor(Color.CYAN);
-			if (Grid.getInstance().getPoints().indexOf(p) == Constants.DRAGGING_INDEX) {
-				g.setColor(Color.ORANGE);
+		synchronized(Grid.getInstance().getPoints()) {
+			for (Point p : Grid.getInstance().getPoints()) {
+				g.setColor(Color.CYAN);
+				if (Grid.getInstance().getPoints().indexOf(p) == Constants.DRAGGING_INDEX) {
+					g.setColor(Color.ORANGE);
+				}
+				drawPoint(g, p);
 			}
-			drawPoint(g, p);
 		}
 		
 		//loop that draws the lines between each point
@@ -223,5 +231,23 @@ public class PlotPanel extends JPanel {
 				drawLine(g, Grid.getInstance().getPoints().get(i), Grid.getInstance().getPoints().get(i+1));
 			}
 		}
+	}
+	
+	private void doPop(MouseEvent e){
+		popUp = new PopUpDemo();
+		popUp.show(e.getComponent(), e.getX(), e.getY());
+	}
+	
+	class PopUpDemo extends JPopupMenu {
+	    /** Generated serialVersionUID */
+		private static final long serialVersionUID = -926882311315622109L;
+		JMenuItem add;
+	    JMenuItem delete;
+	    public PopUpDemo(){
+	        add = new JMenuItem("Add point");
+	        delete = new JMenuItem("Delete point");
+	        add(add);
+	        add(delete);
+	    }
 	}
 }

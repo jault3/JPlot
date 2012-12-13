@@ -21,5 +21,6 @@ public class Constants {
 	public static final boolean SNAP_TO_GRID_CORNERS = true;
 	
 	public static int DRAGGING_INDEX = -5;
+	public static int HOVER_INDEX = -5;
 
 }

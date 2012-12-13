@@ -6,6 +6,7 @@ import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Point;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import javax.swing.JPanel;
@@ -34,7 +35,7 @@ public class Grid extends JPanel {
 	private int gridDensity = Constants.DEFAULT_GRID_DENSITY;
 
 	public Grid() {
-		points = new ArrayList<Point>();
+		points = Collections.synchronizedList(new ArrayList<Point>());
 		
 		setLayout(new BorderLayout());
 		setPreferredSize(new Dimension(Constants.WINDOW_WIDTH, Constants.WINDOW_HEIGHT));
@@ -56,7 +57,6 @@ public class Grid extends JPanel {
 	
 	public void addPoint(Point p) {
 		points.add(p);
-		plotPanel.drawPoint(plotPanel.getGraphics(), p);
 		redraw();
 	}
 	
@@ -65,7 +65,6 @@ public class Grid extends JPanel {
 	}
 	
 	public void redraw() {
-		System.out.println("repainting");
 		repaint();
 	}
 	
@@ -82,11 +81,7 @@ public class Grid extends JPanel {
 	public void paintComponent(Graphics g) {
 		super.paintComponent(g);
 		setBackground(Color.BLACK);
-		System.out.println("clearing");
 		g.clearRect(0, 0, Constants.WINDOW_WIDTH, Constants.WINDOW_HEIGHT);
-		//xAxisPanel.validate();
-		//yAxisPanel.validate();
-		//plotPanel.validate();
 	}
 
 }
