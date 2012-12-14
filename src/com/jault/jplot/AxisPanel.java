@@ -31,11 +31,11 @@ public class AxisPanel extends JPanel {
 	}
 	
 	private void initHorizontal() {
-		setPreferredSize(new Dimension(Constants.GRID_WIDTH, Constants.WINDOW_HEIGHT-Constants.GRID_HEIGHT));
+		setPreferredSize(new Dimension(Constants.GRID_WIDTH, Constants.X_AXIS_HEIGHT));
 	}
 	
 	private void initVertical() {
-		setPreferredSize(new Dimension(Constants.WINDOW_WIDTH-Constants.GRID_WIDTH, Constants.GRID_HEIGHT));
+		setPreferredSize(new Dimension(Constants.Y_AXIS_WIDTH, Constants.GRID_HEIGHT));
 	}
 	
 	/** Draws the x axis numbers */

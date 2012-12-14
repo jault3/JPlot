@@ -8,11 +8,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
 
-import javax.swing.JMenuItem;
 import javax.swing.JPanel;
-import javax.swing.JPopupMenu;
-
-import junit.framework.Assert;
 
 import com.jault.jplot.helpers.Constants;
 
@@ -25,65 +21,22 @@ public class PlotPanel extends JPanel {
 	
 	private int activePointIndexHolder;
 	private Point activePoint;
-	private PopUpDemo popUp;
 
 	public PlotPanel() {
 		setPreferredSize(new Dimension(Constants.GRID_WIDTH, Constants.GRID_HEIGHT));
 		setBackground(Color.BLACK);
 		setVisible(true);
-		this.addMouseMotionListener(new MouseMotionListener() {
-
-			@Override
-			public void mouseDragged(MouseEvent event) {
-				if (activePoint != null) {
-					activePoint = translateToNearestPoint(new Point(event.getX(),event.getY()));
-					Grid.getInstance().getPoints().set(activePointIndexHolder, activePoint);
-					Grid.getInstance().redraw();
-				}
-			}
-			@Override
-			public void mouseMoved(MouseEvent event) {
-				if (activePoint == null) {
-					Point p = setInterceptedPoint(new Point(event.getX(), event.getY()));
-					if (p != null) {
-						Constants.HOVER_INDEX = Grid.getInstance().getPoints().indexOf(p);
-					} else {
-						Constants.HOVER_INDEX = -5;
-					}
-					Grid.getInstance().repaint();
-				}
-			}
-		});
-		addMouseListener(new MouseAdapter() {
-			@Override
-			public void mouseClicked(MouseEvent event) {
-				if (event.getButton() == MouseEvent.BUTTON1) {
-					System.out.println("clicked "+event.getX()+","+event.getY());
-					Grid.getInstance().addPoint(translateToNearestPoint(new Point(event.getX(), event.getY())));
-				} else if (event.getButton() == MouseEvent.BUTTON3) {
-					System.out.println("right clicked");
-					doPop(event);
-				}
-			}
-			@Override
-			public void mousePressed(MouseEvent event) {
-				Point p = new Point(event.getX(), event.getY());
-				activePoint = setInterceptedPoint(p);
-				activePointIndexHolder = Grid.getInstance().getPoints().indexOf(activePoint);
-				Constants.DRAGGING_INDEX = activePointIndexHolder;
-			}
-			@Override
-			public void mouseReleased(MouseEvent event) {
-				activePoint = null;
-				activePointIndexHolder = -5;
-				Constants.DRAGGING_INDEX = -5;
-				Grid.getInstance().repaint();
-				Constants.HOVER_INDEX = -5;
-			}
-		});
+		addMouseMotionListener(new PlotMouseMotionListener());
+		addMouseListener(new PlotMouseAdapter());
 	}
 	
-	public Point setInterceptedPoint(Point point) {
+	/**
+	 * This method returns one of the points in the Grid class that is within 10 pixels of the passed
+	 * in point.  If the passed in point is not within the 10 pixel tolerance, this method returns null.
+	 * @param point
+	 * @return the actual point in the Grid class that is within tolerance of the parameter point, otherwise null
+	 */
+	public Point getInterceptedPoint(Point point) {
 		Point retvalPoint = null;
 		for (Point p : Grid.getInstance().getPoints()) {
 			Point temp = translateToLocation(p);
@@ -93,10 +46,14 @@ public class PlotPanel extends JPanel {
 				retvalPoint = p;
 			}
 		}
-		System.out.println(""+retvalPoint);
 		return retvalPoint;
 	}
 	
+	/**
+	 * This method draws the dark gray grid lines based on the GRID_DENSITY specified in the constants file.
+	 * @param density the number of lines you would like visible on the screen
+	 * @param g graphics used to draw the line
+	 */
 	public void drawGridLines(int density, Graphics g) {
 		int drawingWidth = (Constants.GRID_WIDTH/density)+Constants.GRID_WIDTH;
 		int drawingHeight = (Constants.GRID_HEIGHT/density)+Constants.GRID_HEIGHT;
@@ -110,6 +67,12 @@ public class PlotPanel extends JPanel {
 		for (int i=(Constants.GRID_HEIGHT-Constants.GRID_OFFSET); i>=(Constants.GRID_HEIGHT-drawingHeight);i-=(Constants.GRID_HEIGHT/density)) g.drawLine(0, i, drawingWidth, i);
 	}
 	
+	/**
+	 * This method takes in a graphics instance that is used to draw a filled circle at the passed in point with a
+	 * radius (POINT_RADIUS) specified in the constants file
+	 * @param g
+	 * @param p
+	 */
 	public void drawPoint(Graphics g, Point p) {
 		Point temp = translateToLocation(p);
 		int x = temp.x;
@@ -122,7 +85,13 @@ public class PlotPanel extends JPanel {
 		drawCoordinatesAbovePoint(g, p, temp);
 	}
 	
-	public void drawCoordinatesAbovePoint(Graphics g, Point coordinates, Point location) {
+	/**
+	 * Draws the x and y values of the passed in coordinates Point above the location Point
+	 * @param g graphics used to draw the x and y values
+	 * @param coordinates the point holding the actual numbers that will be drawn on the screen
+	 * @param location the point holding the location on screen that the coordinates will be drawn
+	 */
+	private void drawCoordinatesAbovePoint(Graphics g, Point coordinates, Point location) {
 		if (Constants.HOVER_INDEX == Grid.getInstance().getPoints().indexOf(coordinates)) {
 			g.setColor(Color.WHITE);
 		} else {
@@ -131,6 +100,13 @@ public class PlotPanel extends JPanel {
 		g.drawString(""+coordinates.x+","+coordinates.y, location.x, location.y-10);
 	}
 	
+	/**
+	 * This method is usually called if the SNAP_TO_GRID_CORNERS is set to true in the Constants file and it takes a given
+	 * integer and returns the value corresponding to the closest value of a "corner" on the grid.  It will be a multiple of
+	 * STEP_INCREMENT in the constants file
+	 * @param num, the number to round
+	 * @return the rounded number
+	 */
 	public int round(int num) {
 		int newNum = 0;
 		
@@ -168,6 +144,11 @@ public class PlotPanel extends JPanel {
 		if (Constants.SNAP_TO_GRID_CORNERS) {
 			x = round(x);
 			y = round(y);
+			
+			//need this to update the points in the Grid class after rounding, a reference is passed in so we can just update 
+			//the reference, which still resides in the Grid class so setting the x and y of the passed in point is ok
+			p.x = x;
+			p.y = y;
 		}
 		
 		x = (int)Math.floor(0.5+((Constants.GRID_WIDTH/Grid.getInstance().getGridDensity())*(x/Constants.STEP_INCREMENT)));
@@ -210,7 +191,8 @@ public class PlotPanel extends JPanel {
 		super.paintComponent(g);
 		setBackground(Color.BLACK);
 		drawGridLines(Grid.getInstance().getGridDensity(), g);
-		//loop that draws each point
+		//loop that draws each point, synchronized helps to take care of accessing the same list
+		//from all of these threads the GUI makes
 		synchronized(Grid.getInstance().getPoints()) {
 			for (Point p : Grid.getInstance().getPoints()) {
 				g.setColor(Color.CYAN);
@@ -233,21 +215,55 @@ public class PlotPanel extends JPanel {
 		}
 	}
 	
-	private void doPop(MouseEvent e){
-		popUp = new PopUpDemo();
-		popUp.show(e.getComponent(), e.getX(), e.getY());
+	/** Listeners and Adapters **/
+	private class PlotMouseAdapter extends MouseAdapter {
+
+		@Override
+		public void mouseClicked(MouseEvent event) {
+			if (event.getButton() == MouseEvent.BUTTON1) {
+				System.out.println("clicked "+event.getX()+","+event.getY());
+				//TODO Grid.getInstance().addPoint(translateToNearestPoint(new Point(event.getX(), event.getY())));
+			} else if (event.getButton() == MouseEvent.BUTTON3) {
+				Grid.getInstance().getParent().getParent().dispatchEvent(event);
+			}
+		}
+		@Override
+		public void mousePressed(MouseEvent event) {
+			Point p = new Point(event.getX(), event.getY());
+			activePoint = getInterceptedPoint(p);
+			activePointIndexHolder = Grid.getInstance().getPoints().indexOf(activePoint);
+			Constants.DRAGGING_INDEX = activePointIndexHolder;
+		}
+		@Override
+		public void mouseReleased(MouseEvent event) {
+			activePoint = null;
+			activePointIndexHolder = -5;
+			Constants.DRAGGING_INDEX = -5;
+			Grid.getInstance().repaint();
+			Constants.HOVER_INDEX = -5;
+		}
 	}
 	
-	class PopUpDemo extends JPopupMenu {
-	    /** Generated serialVersionUID */
-		private static final long serialVersionUID = -926882311315622109L;
-		JMenuItem add;
-	    JMenuItem delete;
-	    public PopUpDemo(){
-	        add = new JMenuItem("Add point");
-	        delete = new JMenuItem("Delete point");
-	        add(add);
-	        add(delete);
-	    }
+	private class PlotMouseMotionListener implements MouseMotionListener {
+		@Override
+		public void mouseDragged(MouseEvent event) {
+			if (activePoint != null) {
+				activePoint = translateToNearestPoint(new Point(event.getX(),event.getY()));
+				Grid.getInstance().getPoints().set(activePointIndexHolder, activePoint);
+				Grid.getInstance().redraw();
+			}
+		}
+		@Override
+		public void mouseMoved(MouseEvent event) {
+			if (activePoint == null) {
+				Point p = getInterceptedPoint(new Point(event.getX(), event.getY()));
+				if (p != null) {
+					Constants.HOVER_INDEX = Grid.getInstance().getPoints().indexOf(p);
+				} else {
+					Constants.HOVER_INDEX = -5;
+				}
+				Grid.getInstance().repaint();
+			}
+		}
 	}
 }
