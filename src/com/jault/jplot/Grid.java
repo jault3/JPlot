@@ -33,6 +33,7 @@ public class Grid extends JPanel {
 	private AxisPanel xAxisPanel, yAxisPanel;
 	private List<Point> points;
 	private InfoPanel infoPanel;
+	private Point highlightedPoint;
 	
 	private int gridDensity = Constants.DEFAULT_GRID_DENSITY;
 
@@ -79,6 +80,18 @@ public class Grid extends JPanel {
 	public void setGridDensity(int density) {
 		gridDensity = density;
 		redraw();
+	}
+	
+	public Point getHighlightedPoint() {
+		return this.highlightedPoint;
+	}
+	
+	public void setHighlightedPoint(int indexInPointsArray) {
+		if (indexInPointsArray == -5) {
+			this.highlightedPoint = null;
+		} else {			
+			this.highlightedPoint = this.points.get(indexInPointsArray);
+		}
 	}
 	
 	@Override

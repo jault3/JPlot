@@ -74,6 +74,9 @@ public class PlotPanel extends JPanel {
 	 * @param p
 	 */
 	public void drawPoint(Graphics g, Point p) {
+		if (Grid.getInstance().getHighlightedPoint() != null && Grid.getInstance().getHighlightedPoint().x == p.x && Grid.getInstance().getHighlightedPoint().y == p.y) {
+			g.setColor(Color.ORANGE);
+		}
 		Point temp = translateToLocation(p);
 		int x = temp.x;
 		int y = temp.y;
@@ -221,10 +224,20 @@ public class PlotPanel extends JPanel {
 		@Override
 		public void mouseClicked(MouseEvent event) {
 			if (event.getButton() == MouseEvent.BUTTON1) {
-				System.out.println("clicked "+event.getX()+","+event.getY());
-				//TODO Grid.getInstance().addPoint(translateToNearestPoint(new Point(event.getX(), event.getY())));
+				Point point = translateToNearestPoint(new Point(event.getX(), event.getY()));
+				boolean found = false;
+				for (Point p : Grid.getInstance().getPoints()) {
+					if (p.x == point.x && p.y == point.y) {
+						found = true;
+						Grid.getInstance().setHighlightedPoint(Grid.getInstance().getPoints().indexOf(p));
+					}
+				}
+				if (found == false) {
+					Grid.getInstance().setHighlightedPoint(-5);
+				}
+				Grid.getInstance().redraw();
 			} else if (event.getButton() == MouseEvent.BUTTON3) {
-				Grid.getInstance().getParent().getParent().dispatchEvent(event);
+				Grid.getInstance().getParent().getParent().dispatchEvent(event);//TODO
 			}
 		}
 		@Override
