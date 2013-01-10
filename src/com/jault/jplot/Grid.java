@@ -62,11 +62,16 @@ public class Grid extends JPanel {
 	
 	public void addPoint(Point p) {
 		points.add(p);
+		infoPanel.setPointsLabel(points.size());
 		redraw();
 	}
 	
 	public List<Point> getPoints() {
 		return this.points;
+	}
+	
+	public int getNumPoints() {
+		return points.size();
 	}
 	
 	public void redraw() {

@@ -21,6 +21,7 @@ public class InfoPanel extends JPanel {
 	private static final long serialVersionUID = 4846524799433655631L;
 	
 	private JTextField xTextField, yTextField;
+	private JLabel numPoints;
 	
 	public InfoPanel() {
 		setPreferredSize(new Dimension(Constants.INFO_PANEL_WIDTH, Constants.GRID_HEIGHT));
@@ -32,14 +33,22 @@ public class InfoPanel extends JPanel {
 	public void initSubviews() {
 		xTextField = new JTextField(3);
 		yTextField = new JTextField(3);
+		numPoints = new JLabel();
 		xTextField.addKeyListener(new EnterListener());
 		yTextField.addKeyListener(new EnterListener());
 		JLabel label = new JLabel("x, y");
+		JLabel pointLabel = new JLabel("Number of Points: ");
 		label.setHorizontalAlignment(SwingConstants.CENTER);
 		label.setPreferredSize(new Dimension(100,20));
 		add(label);
 		add(xTextField);
 		add(yTextField);
+		add(pointLabel);
+		add(numPoints);
+	}
+	
+	public void setPointsLabel(int num){
+		numPoints.setText(num + "");
 	}
 	
 	public class EnterListener implements KeyListener {
