@@ -27,5 +27,7 @@ public class Constants {
 	
 	public static int DRAGGING_INDEX = -5;
 	public static int HOVER_INDEX = -5;
+	
+	public static int ZOOM = 1;
 
 }

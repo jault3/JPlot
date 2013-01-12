@@ -7,6 +7,8 @@ import java.awt.Point;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
 
 import javax.swing.JPanel;
 
@@ -28,6 +30,7 @@ public class PlotPanel extends JPanel {
 		setVisible(true);
 		addMouseMotionListener(new PlotMouseMotionListener());
 		addMouseListener(new PlotMouseAdapter());
+		this.addMouseWheelListener(new PlotMouseWheelListener());
 	}
 	
 	/**
@@ -218,9 +221,35 @@ public class PlotPanel extends JPanel {
 		}
 	}
 	
+	public void zoomIn() {
+		Grid.getInstance().setGridDensity(Grid.getInstance().getGridDensity()+1);
+		Grid.getInstance().redraw();
+	}
+	
+	public void zoomOut() {
+		Grid.getInstance().setGridDensity(Grid.getInstance().getGridDensity()-1);
+		Grid.getInstance().redraw();
+	}
+	
+	private class PlotMouseWheelListener implements MouseWheelListener {
+
+		@Override
+		public void mouseWheelMoved(MouseWheelEvent event) {
+			System.out.println("wheel moved mouseevent");
+			
+			if (event.getWheelRotation() > 0) {
+				zoomIn();
+			} else {
+				zoomOut();
+			}
+			
+		}
+		
+	}
+	
 	/** Listeners and Adapters **/
 	private class PlotMouseAdapter extends MouseAdapter {
-
+		
 		@Override
 		public void mouseClicked(MouseEvent event) {
 			if (event.getButton() == MouseEvent.BUTTON1) {

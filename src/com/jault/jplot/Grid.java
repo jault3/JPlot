@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import javax.swing.JFrame;
 import javax.swing.JPanel;
 
 import com.jault.jplot.helpers.Constants;
@@ -83,8 +82,10 @@ public class Grid extends JPanel {
 	}
 	
 	public void setGridDensity(int density) {
-		gridDensity = density;
-		redraw();
+		if (density > 1) {
+			gridDensity = density;
+			redraw();
+		}
 	}
 	
 	public Point getHighlightedPoint() {
